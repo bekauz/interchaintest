@@ -154,6 +154,7 @@ func (cs *chainSet) Start(ctx context.Context, testName string, additionalGenesi
 	for c := range cs.chains {
 		c := c
 		if cosmosChain, ok := c.(*cosmos.CosmosChain); ok && cosmosChain.Provider != nil {
+			print("cosmoChain: ", cosmosChain)
 			eg.Go(func() error {
 				// this is a consumer chain
 				if err := cosmosChain.StartConsumer(testName, egCtx, additionalGenesisWallets[c]...); err != nil {

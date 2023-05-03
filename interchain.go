@@ -569,6 +569,7 @@ func (ic *Interchain) genesisWalletAmounts(ctx context.Context) (map[ibc.Chain][
 		if ic.additionalGenesisWallets != nil {
 			walletAmounts[c] = append(walletAmounts[c], ic.additionalGenesisWallets[c]...)
 		}
+		print("minted tokens: ", c.Config().Denom)
 	}
 
 	// Then add all defined relayer wallets.

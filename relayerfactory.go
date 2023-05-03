@@ -65,6 +65,15 @@ func (f builtinRelayerFactory) Build(
 			networkID,
 			f.options...,
 		)
+	// this probably makes no sense
+	case ibc.Hermes:
+		return rly.NewCosmosRelayer(
+			f.log,
+			t.Name(),
+			cli,
+			networkID,
+			f.options...,
+		)
 	default:
 		panic(fmt.Errorf("RelayerImplementation %v unknown", f.impl))
 	}

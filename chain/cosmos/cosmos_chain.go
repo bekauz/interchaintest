@@ -890,6 +890,7 @@ func (c *CosmosChain) StartConsumer(testName string, ctx context.Context, additi
 			if err := v.InitFullNodeFiles(ctx); err != nil {
 				return err
 			}
+			print("initializing full nodes: ", v)
 			for configFile, modifiedConfig := range configFileOverrides {
 				modifiedToml, ok := modifiedConfig.(testutil.Toml)
 				if !ok {
@@ -904,6 +905,7 @@ func (c *CosmosChain) StartConsumer(testName string, ctx context.Context, additi
 					configFile,
 					modifiedToml,
 				); err != nil {
+					print("modified config error: ", err)
 					return err
 				}
 			}
@@ -911,11 +913,14 @@ func (c *CosmosChain) StartConsumer(testName string, ctx context.Context, additi
 		})
 	}
 
+	print("full node init finished")
 	// wait for this to finish
 	if err := eg.Wait(); err != nil {
+		print("doesn't finish initializing full nodes")
 		return err
 	}
 
+	print("copying provider priv val keys")
 	// Copy provider priv val keys to these nodes
 	for i, val := range c.Provider.Validators {
 		privVal, err := val.privValFileContent(ctx)
@@ -927,6 +932,7 @@ func (c *CosmosChain) StartConsumer(testName string, ctx context.Context, additi
 		}
 	}
 
+	print("pregenesis")
 	if c.cfg.PreGenesis != nil {
 		err := c.cfg.PreGenesis(chainCfg)
 		if err != nil {
@@ -936,7 +942,9 @@ func (c *CosmosChain) StartConsumer(testName string, ctx context.Context, additi
 
 	validator0 := c.Validators[0]
 
+	print("adding genesis accs:")
 	for _, wallet := range additionalGenesisWallets {
+		print("adding genesis account")
 		if err := validator0.AddGenesisAccount(ctx, wallet.Address, []types.Coin{{Denom: wallet.Denom, Amount: types.NewInt(wallet.Amount)}}); err != nil {
 			return err
 		}
