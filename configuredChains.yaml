@@ -610,8 +610,8 @@ neutron:
   bech32-prefix: neutron
   denom: untrn
   gas-prices: 0.0untrn
-  gas-adjustment: 1.3
-  trusting-period: "504h"
+  gas-adjustment: 1.1
+  trusting-period: 96h
   images:
     - repository: ghcr.io/strangelove-ventures/heighliner/neutron
       uid-gid: 1025:1025
