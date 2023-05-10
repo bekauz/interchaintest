@@ -609,13 +609,13 @@ neutron:
   bin: neutrond
   bech32-prefix: neutron
   denom: untrn
-  gas-prices: 0.0untrn
+  gas-prices: 0.001untrn
   gas-adjustment: 1.1
   trusting-period: 96h
   images:
     - repository: ghcr.io/strangelove-ventures/heighliner/neutron
       uid-gid: 1025:1025
-  no-host-mount: false
+  no-host-mount: true
 
 rizon:
   name: rizon

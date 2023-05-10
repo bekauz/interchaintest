@@ -26,10 +26,36 @@ func TestICS(t *testing.T) {
 
 	ctx := context.Background()
 
+	// neutronValidators := int(0)
+	// neutronFullnodes := int(0)
+
 	// Chain Factory
 	cf := ibctest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*ibctest.ChainSpec{
 		{Name: "gaia", Version: "v9.0.0-rc1", ChainConfig: ibc.ChainConfig{GasAdjustment: 1.5}},
-		{Name: "neutron", Version: "v1.0.1"},
+		// {Name: "neutron", Version: "v1.0.1", NumValidators: &neutronValidators, NumFullNodes: &neutronFullnodes},
+		{ChainConfig: ibc.ChainConfig{
+			Type:    "cosmos",
+			Name:    "neutron",
+			ChainID: "neutron-2",
+			Images: []ibc.DockerImage{
+				// {
+				// 	Repository: "ghcr.io/strangelove-ventures/heighliner/neutron", // FOR LOCAL IMAGE USE: Docker Image Name
+				// 	Version:    "v1.0.1",                                          // FOR LOCAL IMAGE USE: Docker Image Tag
+				// },
+				{
+					Repository: "neutron-node",
+					Version:    "latest",
+				},
+			},
+			Bin:            "neutrond",
+			Bech32Prefix:   "neutron",
+			Denom:          "untrn",
+			GasPrices:      "0.01untrn",
+			GasAdjustment:  1.3,
+			TrustingPeriod: "508h",
+			NoHostMount:    false,
+		},
+		},
 	})
 
 	chains, err := cf.Chains(t.Name())
