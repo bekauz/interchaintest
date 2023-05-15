@@ -798,6 +798,7 @@ func (c *CosmosChain) Start(testName string, ctx context.Context, additionalGene
 
 // Bootstraps the provider chain and starts it from genesis
 func (c *CosmosChain) StartProvider(testName string, ctx context.Context, additionalGenesisWallets ...ibc.WalletAmount) error {
+	print("\n\n START PROVIDER \n\n")
 	existingFunc := c.cfg.ModifyGenesis
 	c.cfg.ModifyGenesis = func(cc ibc.ChainConfig, b []byte) ([]byte, error) {
 		var err error
@@ -878,6 +879,8 @@ func (c *CosmosChain) StartProvider(testName string, ctx context.Context, additi
 
 // Bootstraps the consumer chain and starts it from genesis
 func (c *CosmosChain) StartConsumer(testName string, ctx context.Context, additionalGenesisWallets ...ibc.WalletAmount) error {
+	print("\n\n START CONSUMER \n\n")
+
 	chainCfg := c.Config()
 
 	configFileOverrides := chainCfg.ConfigFileOverrides

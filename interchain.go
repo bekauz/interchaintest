@@ -479,7 +479,7 @@ func (ic *Interchain) Build(ctx context.Context, rep *testreporter.RelayerExecRe
 				Version:        "1",
 			}); err != nil {
 				return fmt.Errorf(
-					"failed to create ccv channels on path %s on relayer %s between chains %s and %s: %w",
+					"failed to create ccv channels on path %s \non relayer %s \nbetween chains %s and %s: %w",
 					rp.Path, rp.Relayer, ic.chains[p], ic.chains[c], err,
 				)
 			}

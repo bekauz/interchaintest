@@ -32,6 +32,30 @@ func ModifyGenesisProposalTime(votingPeriod string, maxDepositPeriod string) fun
 	}
 }
 
+func PrintGenesis() func(ibc.ChainConfig, []byte) ([]byte, error) {
+	return func(chainConfig ibc.ChainConfig, genbz []byte) ([]byte, error) {
+		g := make(map[string]interface{})
+		if err := json.Unmarshal(genbz, &g); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal genesis file: %w", err)
+		}
+		print("\n\n GAIA GENESIS \n\n")
+
+		// pp := func(err error) {
+		// 	json.NewEncoder(os.Stdout).Encode(g) // Output JSON
+		// 	if err != nil {
+		// 		fmt.Println("ERROR:", err)
+		// 	}
+		// }
+		print(json.NewEncoder(os.Stdout).Encode(g))
+
+		out, err := json.Marshal(g)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal genesis bytes to json: %w", err)
+		}
+		return out, nil
+	}
+}
+
 func ModifyNeutronGenesis(
 	soft_opt_out_threshold string,
 	reward_denoms []string,
