@@ -39,29 +39,29 @@ func TestICS(t *testing.T) {
 		// {Name: "gaia", Version: "v9.1.0", ChainConfig: ibc.ChainConfig{GasAdjustment: 1.5}},
 		{Name: "gaia", Version: "v9.1.0"},
 		// {Name: "neutron", Version: "v1.0.1"},
-		{Name: "neutron", Version: "v1.0.1", ChainConfig: ibc.ChainConfig{
-			ModifyGenesis: cosmos.ModifyNeutronGenesis(0.05, reward_denoms[:], provider_reward_denoms[:]),
-		}},
-		// {ChainConfig: ibc.ChainConfig{
-		// 	Type:    "cosmos",
-		// 	Name:    "neutron",
-		// 	ChainID: "neutron-2",
-		// 	Images: []ibc.DockerImage{
-		// 		{
-		// 			Repository: "neutron",
-		// 			Version:    "local",
-		// 		},
-		// 	},
-		// 	Bin:            "neutrond",
-		// 	Bech32Prefix:   "neutron",
-		// 	Denom:          "untrn",
-		// 	GasPrices:      "0.01untrn",
-		// 	GasAdjustment:  1.3,
-		// 	TrustingPeriod: "1197504s",
-		// 	NoHostMount:    false,
-		// 	// ModifyGenesis:  cosmos.ModifyNeutronGenesis(0.05, reward_denoms[:], provider_reward_denoms[:]),
-		// },
-		// },
+		// {Name: "neutron", Version: "v1.0.1", ChainConfig: ibc.ChainConfig{
+		// 	ModifyGenesis: cosmos.ModifyNeutronGenesis(0.05, reward_denoms[:], provider_reward_denoms[:]),
+		// }},
+		{ChainConfig: ibc.ChainConfig{
+			Type:    "cosmos",
+			Name:    "neutron",
+			ChainID: "neutron-2",
+			Images: []ibc.DockerImage{
+				{
+					Repository: "neutron-node",
+					Version:    "latest",
+				},
+			},
+			Bin:            "neutrond",
+			Bech32Prefix:   "neutron",
+			Denom:          "untrn",
+			GasPrices:      "0.01untrn",
+			GasAdjustment:  1.3,
+			TrustingPeriod: "1197504s",
+			NoHostMount:    false,
+			ModifyGenesis:  cosmos.ModifyNeutronGenesis("0.05", reward_denoms[:], provider_reward_denoms[:]),
+		},
+		},
 	})
 
 	chains, err := cf.Chains(t.Name())
