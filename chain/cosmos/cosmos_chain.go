@@ -251,6 +251,8 @@ func (c *CosmosChain) SendIBCTransfer(
 	amount ibc.WalletAmount,
 	options ibc.TransferOptions,
 ) (tx ibc.Tx, _ error) {
+	print("\nIBC TRANSFER: ", channelID, " ", keyName, "\n")
+
 	txHash, err := c.getFullNode().SendIBCTransfer(ctx, channelID, keyName, amount, options)
 	if err != nil {
 		return tx, fmt.Errorf("send ibc transfer: %w", err)
@@ -410,6 +412,8 @@ func (c *CosmosChain) ExportState(ctx context.Context, height int64) (string, er
 // GetBalance fetches the current balance for a specific account address and denom.
 // Implements Chain interface
 func (c *CosmosChain) GetBalance(ctx context.Context, address string, denom string) (int64, error) {
+	balances := bankTypes.QueryAllBalances
+	print("\nbalances of ", denom, " on address: ", address, " : ", balances, "\n")
 	params := &bankTypes.QueryBalanceRequest{Address: address, Denom: denom}
 	grpcAddress := c.getFullNode().hostGRPCPort
 	conn, err := grpc.Dial(grpcAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -879,7 +883,7 @@ func (c *CosmosChain) StartProvider(testName string, ctx context.Context, additi
 
 // Bootstraps the consumer chain and starts it from genesis
 func (c *CosmosChain) StartConsumer(testName string, ctx context.Context, additionalGenesisWallets ...ibc.WalletAmount) error {
-	print("\n\n START CONSUMER \n\n")
+	print("\n\n START PROVIDER \n\n")
 
 	chainCfg := c.Config()
 

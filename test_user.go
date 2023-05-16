@@ -50,14 +50,16 @@ func GetAndFundTestUserWithMnemonic(
 	if err != nil {
 		return nil, fmt.Errorf("failed to get source user wallet: %w", err)
 	}
-
-	err = chain.SendFunds(ctx, FaucetAccountKeyName, ibc.WalletAmount{
-		Address: user.Bech32Address(chainCfg.Bech32Prefix),
-		Amount:  amount,
-		Denom:   chainCfg.Denom,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get funds from faucet: %w", err)
+	// not funding neutron
+	if chain.Config().ChainID != "neutron-2" {
+		err = chain.SendFunds(ctx, FaucetAccountKeyName, ibc.WalletAmount{
+			Address: user.Bech32Address(chainCfg.Bech32Prefix),
+			Amount:  amount,
+			Denom:   chainCfg.Denom,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to get funds from faucet: %w", err)
+		}
 	}
 	return user, nil
 }
