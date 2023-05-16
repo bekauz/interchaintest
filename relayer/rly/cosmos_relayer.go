@@ -130,7 +130,9 @@ func (commander) CreateChannel(pathName string, opts ibc.CreateChannelOptions, h
 		"--dst-port", opts.DestPortName,
 		"--order", opts.Order.String(),
 		"--version", opts.Version,
-
+		"--debug",
+		"--log-format",
+		"console",
 		"--home", homeDir,
 	}
 }
@@ -153,6 +155,9 @@ func (commander) CreateConnections(pathName, homeDir string) []string {
 	return []string{
 		"rly", "tx", "connection", pathName,
 		"--home", homeDir,
+		"--debug",
+		"--log-format",
+		"console",
 	}
 }
 
