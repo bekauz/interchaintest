@@ -84,7 +84,8 @@ func TestICS(t *testing.T) {
 	).Build(t, client, network)
 
 	// Prep Interchain
-	const ibcPath = "ics-path"
+	const icsPath = "ics-path"
+	const ibcPath = "ibc-path"
 	ic := ibctest.NewInterchain().
 		AddChain(provider).
 		AddChain(consumer).
@@ -94,20 +95,14 @@ func TestICS(t *testing.T) {
 			Provider: provider,
 			Consumer: consumer,
 			Relayer:  r,
-			Path:     ibcPath,
+			Path:     icsPath,
+		}).
+		AddLink(ibctest.InterchainLink{
+			Chain1:  provider,
+			Chain2:  consumer,
+			Relayer: r,
+			Path:    ibcPath,
 		})
-		// AddLink(ibctest.InterchainLink{
-		// 	Chain1:  consumer,
-		// 	Chain2:  stride,
-		// 	Relayer: r,
-		// 	Path:    "neutron-stride-path",
-		// })
-		// AddLink(ibctest.InterchainLink{
-		// 	Chain1:  provider,
-		// 	Chain2:  stride,
-		// 	Relayer: r,
-		// 	Path:    "gaia-stride-path",
-		// })
 
 	// Log location
 	f, err := ibctest.CreateLogFile(fmt.Sprintf("%d.json", time.Now().Unix()))
@@ -148,30 +143,22 @@ func TestICS(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, fundAmount, gaiaUserBalInitial)
 
-	// not funding neutron
-	neutronUserBalInitial, err := consumer.GetBalance(
-		ctx,
-		neutronUser.Bech32Address(consumer.Config().Bech32Prefix),
-		consumer.Config().Denom)
-	require.NoError(t, err)
-	require.Equal(t, int64(0), neutronUserBalInitial)
-
 	// Get Channel ID
-	// gaiaChannelInfo, err := r.GetChannels(ctx, eRep, provider.Config().ChainID)
-	// require.NoError(t, err)
-	// gaiaChannelID := gaiaChannelInfo[0].ChannelID
-
-	// neutronChannelInfo, err := r.GetChannels(ctx, eRep, consumer.Config().ChainID)
-	// require.NoError(t, err)
-	// neutronChannelID := neutronChannelInfo[0].ChannelID
-
-	gaiaNeutronChannel, err := ibc.GetTransferChannel(
-		ctx,
-		r,
-		eRep,
-		provider.Config().ChainID,
-		consumer.Config().ChainID)
+	gaiaChannelInfo, err := r.GetChannels(ctx, eRep, provider.Config().ChainID)
 	require.NoError(t, err)
+	gaiaChannelID := gaiaChannelInfo[1].ChannelID
+
+	neutronChannelInfo, err := r.GetChannels(ctx, eRep, consumer.Config().ChainID)
+	require.NoError(t, err)
+	neutronChannelID := neutronChannelInfo[1].ChannelID
+
+	// gaiaNeutronChannel, err := ibc.GetTransferChannel(
+	// 	ctx,
+	// 	r,
+	// 	eRep,
+	// 	provider.Config().ChainID,
+	// 	consumer.Config().ChainID)
+	// require.NoError(t, err)
 
 	amountToSend := int64(500_000)
 	dstAddress := neutronUser.Bech32Address(consumer.Config().Bech32Prefix)
@@ -182,7 +169,7 @@ func TestICS(t *testing.T) {
 	}
 	tx, err := provider.SendIBCTransfer(
 		ctx,
-		gaiaNeutronChannel.ChannelID,
+		gaiaChannelID,
 		gaiaUser.GetKeyName(),
 		transfer,
 		ibc.TransferOptions{})
@@ -190,8 +177,10 @@ func TestICS(t *testing.T) {
 	require.NoError(t, tx.Validate())
 
 	// relay packets and acknoledgments
-	require.NoError(t, r.FlushPackets(ctx, eRep, ibcPath, gaiaNeutronChannel.ChannelID))
-	require.NoError(t, r.FlushAcknowledgements(ctx, eRep, ibcPath, gaiaNeutronChannel.ChannelID))
+	require.NoError(t, r.FlushPackets(ctx, eRep, ibcPath, neutronChannelID))
+	require.NoError(t, r.FlushAcknowledgements(ctx, eRep, ibcPath, gaiaChannelID))
+	require.NoError(t, r.FlushPackets(ctx, eRep, icsPath, neutronChannelID))
+	require.NoError(t, r.FlushAcknowledgements(ctx, eRep, icsPath, gaiaChannelID))
 
 	// test source wallet has decreased funds
 	expectedBal := gaiaUserBalInitial - amountToSend
@@ -204,9 +193,13 @@ func TestICS(t *testing.T) {
 
 	// Trace IBC Denom
 	srcDenomTrace := transfertypes.ParseDenomTrace(
-		transfertypes.GetPrefixedDenom("transfer", gaiaNeutronChannel.Counterparty.ChannelID, provider.Config().Denom))
+		transfertypes.GetPrefixedDenom("transfer", neutronChannelID, provider.Config().Denom))
 	dstIbcDenom := srcDenomTrace.IBCDenom()
 
+	neutronsrcDenomTrace := transfertypes.ParseDenomTrace(
+		transfertypes.GetPrefixedDenom("transfer", neutronChannelID, provider.Config().Denom))
+	neutrondstIbcDenom := neutronsrcDenomTrace.IBCDenom()
+	print("\n\n", neutrondstIbcDenom)
 	// Test destination wallet has increased funds
 	neutronUserBalNew, err := consumer.GetBalance(
 		ctx,
