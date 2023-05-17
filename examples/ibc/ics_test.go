@@ -28,8 +28,6 @@ func TestICS(t *testing.T) {
 
 	ctx := context.Background()
 
-	// neutronValidators := int(0)
-	// neutronFullnodes := int(0)
 	var reward_denoms [1]string
 	var provider_reward_denoms [1]string
 
@@ -62,13 +60,13 @@ func TestICS(t *testing.T) {
 				ModifyGenesis:  cosmos.ModifyNeutronGenesis("0.05", reward_denoms[:], provider_reward_denoms[:]),
 			},
 		},
-		// {Name: "stride", Version: "v9.0.0"},
+		{Name: "stride", Version: "v9.0.0"},
 	})
 
 	chains, err := cf.Chains(t.Name())
 	require.NoError(t, err)
-	provider, consumer := chains[0], chains[1]
-	// provider, consumer, stride := chains[0], chains[1], chains[2]
+	// provider, consumer := chains[0], chains[1]
+	provider, consumer, stride := chains[0], chains[1], chains[2]
 
 	// Relayer Factory
 	client, network := ibctest.DockerSetup(t)
@@ -81,11 +79,12 @@ func TestICS(t *testing.T) {
 
 	// Prep Interchain
 	const icsPath = "ics-path"
-	const ibcPath = "ibc-path"
+	const gaiaNeutronIbcPath = "gaia-neutron-ibc-path"
+	const gaiaStrideIbcPath = "gaia-stride-ibc-path"
 	ic := ibctest.NewInterchain().
 		AddChain(provider).
 		AddChain(consumer).
-		// AddChain(stride).
+		AddChain(stride).
 		AddRelayer(r, "relayer").
 		AddProviderConsumerLink(ibctest.ProviderConsumerLink{
 			Provider: provider,
@@ -97,7 +96,13 @@ func TestICS(t *testing.T) {
 			Chain1:  provider,
 			Chain2:  consumer,
 			Relayer: r,
-			Path:    ibcPath,
+			Path:    gaiaNeutronIbcPath,
+		}).
+		AddLink(ibctest.InterchainLink{
+			Chain1:  provider,
+			Chain2:  stride,
+			Relayer: r,
+			Path:    gaiaStrideIbcPath,
 		})
 
 	// Log location
@@ -118,18 +123,19 @@ func TestICS(t *testing.T) {
 	})
 	require.NoError(t, err, "failed to build interchain")
 
-	err = testutil.WaitForBlocks(ctx, 10, provider, consumer)
+	err = testutil.WaitForBlocks(ctx, 10, provider, consumer, stride)
 	require.NoError(t, err, "failed to wait for blocks")
 
 	// Create and Fund User Wallets on gaia, neutron, and stride
 	fundAmount := int64(10_000_000)
-	users := ibctest.GetAndFundTestUsers(t, ctx, "default", fundAmount, provider, consumer)
+	users := ibctest.GetAndFundTestUsers(t, ctx, "default", fundAmount, provider, consumer, stride)
 
 	gaiaUser := users[0]
 	neutronUser := users[1]
-	// strideUser := users[2]
+	strideUser := users[2]
+
 	// Wait a few blocks for user accounts to be created on chain.
-	err = testutil.WaitForBlocks(ctx, 5, provider, consumer)
+	err = testutil.WaitForBlocks(ctx, 5, provider, consumer, stride)
 	require.NoError(t, err)
 
 	gaiaUserBalInitial, err := provider.GetBalance(
@@ -148,30 +154,56 @@ func TestICS(t *testing.T) {
 	require.NoError(t, err)
 	neutronChannelID := neutronChannelInfo[1].ChannelID
 
+	strideChannelInfo, err := r.GetChannels(ctx, eRep, stride.Config().ChainID)
+	require.NoError(t, err)
+	require.Equal(t, len(strideChannelInfo), 1)
+	strideChannelID := strideChannelInfo[0].ChannelID
+
 	amountToSend := int64(500_000)
-	dstAddress := neutronUser.Bech32Address(consumer.Config().Bech32Prefix)
-	transfer := ibc.WalletAmount{
-		Address: dstAddress,
+	neutronAddress := neutronUser.Bech32Address(consumer.Config().Bech32Prefix)
+	strideAddress := strideUser.Bech32Address(stride.Config().Bech32Prefix)
+
+	transferNeutron := ibc.WalletAmount{
+		Address: neutronAddress,
 		Denom:   provider.Config().Denom,
 		Amount:  amountToSend,
 	}
-	tx, err := provider.SendIBCTransfer(
+	transferStride := ibc.WalletAmount{
+		Address: strideAddress,
+		Denom:   provider.Config().Denom,
+		Amount:  amountToSend,
+	}
+
+	neutronTx, err := provider.SendIBCTransfer(
 		ctx,
 		gaiaChannelID,
 		gaiaUser.GetKeyName(),
-		transfer,
+		transferNeutron,
 		ibc.TransferOptions{})
 	require.NoError(t, err)
-	require.NoError(t, tx.Validate())
+	require.NoError(t, neutronTx.Validate())
 
-	// relay packets and acknoledgments
-	require.NoError(t, r.FlushPackets(ctx, eRep, ibcPath, neutronChannelID))
-	require.NoError(t, r.FlushAcknowledgements(ctx, eRep, ibcPath, gaiaChannelID))
+	strideTx, err := provider.SendIBCTransfer(
+		ctx,
+		gaiaChannelID,
+		gaiaUser.GetKeyName(),
+		transferStride,
+		ibc.TransferOptions{})
+	require.NoError(t, err)
+	require.NoError(t, strideTx.Validate())
+
+	// relay IBC packets and acks
+	require.NoError(t, r.FlushPackets(ctx, eRep, gaiaNeutronIbcPath, neutronChannelID))
+	require.NoError(t, r.FlushPackets(ctx, eRep, gaiaStrideIbcPath, strideChannelID))
+	require.NoError(t, r.FlushAcknowledgements(ctx, eRep, gaiaNeutronIbcPath, gaiaChannelID))
+	require.NoError(t, r.FlushAcknowledgements(ctx, eRep, gaiaStrideIbcPath, gaiaChannelID))
+
+	// relay ics packets and acks
 	require.NoError(t, r.FlushPackets(ctx, eRep, icsPath, neutronChannelID))
 	require.NoError(t, r.FlushAcknowledgements(ctx, eRep, icsPath, gaiaChannelID))
 
 	// test source wallet has decreased funds
-	expectedBal := gaiaUserBalInitial - amountToSend
+	expectedBal := gaiaUserBalInitial - amountToSend*2
 	gaiaUserBalNew, err := provider.GetBalance(
 		ctx,
 		gaiaUser.Bech32Address(provider.Config().Bech32Prefix),
@@ -179,16 +211,27 @@ func TestICS(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expectedBal, gaiaUserBalNew)
 
-	// Trace IBC Denom
-	srcDenomTrace := transfertypes.ParseDenomTrace(
+	// Trace IBC Denoms
+	neutronSrcDenomTrace := transfertypes.ParseDenomTrace(
 		transfertypes.GetPrefixedDenom("transfer", neutronChannelID, provider.Config().Denom))
-	dstIbcDenom := srcDenomTrace.IBCDenom()
+	strideSrcDenomTrace := transfertypes.ParseDenomTrace(
+		transfertypes.GetPrefixedDenom("transfer", strideChannelID, provider.Config().Denom))
 
-	// Test destination wallet has increased funds
+	neutronDstIbcDenom := neutronSrcDenomTrace.IBCDenom()
+	strideDstIbcDenom := strideSrcDenomTrace.IBCDenom()
+
+	// Test destination wallets have increased funds
 	neutronUserBalNew, err := consumer.GetBalance(
 		ctx,
 		neutronUser.Bech32Address(consumer.Config().Bech32Prefix),
-		dstIbcDenom)
+		neutronDstIbcDenom)
 	require.NoError(t, err)
 	require.Equal(t, amountToSend, neutronUserBalNew)
+
+	strideUserBalNew, err := stride.GetBalance(
+		ctx,
+		strideUser.Bech32Address(stride.Config().Bech32Prefix),
+		strideDstIbcDenom)
+	require.NoError(t, err)
+	require.Equal(t, amountToSend, strideUserBalNew)
 }
