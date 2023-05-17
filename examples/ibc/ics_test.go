@@ -37,14 +37,10 @@ func TestICS(t *testing.T) {
 	provider_reward_denoms[0] = "uatom"
 	// Chain Factory
 	cf := ibctest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*ibctest.ChainSpec{
-		// {Name: "gaia", Version: "v9.1.0", ChainConfig: ibc.ChainConfig{GasAdjustment: 1.5}},
 		{Name: "gaia", Version: "v9.1.0", ChainConfig: ibc.ChainConfig{
 			ModifyGenesis: cosmos.PrintGenesis(),
 			GasPrices:     "0.0atom",
 		}},
-		// {Name: "neutron", Version: "v1.0.1", ChainConfig: ibc.ChainConfig{
-		// 	ModifyGenesis: cosmos.ModifyNeutronGenesis("0.05", reward_denoms[:], provider_reward_denoms[:]),
-		// }},
 		{
 			ChainConfig: ibc.ChainConfig{
 				Type:    "cosmos",
@@ -152,14 +148,6 @@ func TestICS(t *testing.T) {
 	require.NoError(t, err)
 	neutronChannelID := neutronChannelInfo[1].ChannelID
 
-	// gaiaNeutronChannel, err := ibc.GetTransferChannel(
-	// 	ctx,
-	// 	r,
-	// 	eRep,
-	// 	provider.Config().ChainID,
-	// 	consumer.Config().ChainID)
-	// require.NoError(t, err)
-
 	amountToSend := int64(500_000)
 	dstAddress := neutronUser.Bech32Address(consumer.Config().Bech32Prefix)
 	transfer := ibc.WalletAmount{
@@ -196,10 +184,6 @@ func TestICS(t *testing.T) {
 		transfertypes.GetPrefixedDenom("transfer", neutronChannelID, provider.Config().Denom))
 	dstIbcDenom := srcDenomTrace.IBCDenom()
 
-	neutronsrcDenomTrace := transfertypes.ParseDenomTrace(
-		transfertypes.GetPrefixedDenom("transfer", neutronChannelID, provider.Config().Denom))
-	neutrondstIbcDenom := neutronsrcDenomTrace.IBCDenom()
-	print("\n\n", neutrondstIbcDenom)
 	// Test destination wallet has increased funds
 	neutronUserBalNew, err := consumer.GetBalance(
 		ctx,
