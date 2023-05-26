@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/strangelove-ventures/interchaintest/v3/ibc"
 	"github.com/strangelove-ventures/interchaintest/v3/internal/dockerutil"
 	"github.com/strangelove-ventures/interchaintest/v3/testutil"
@@ -50,17 +51,26 @@ func GetAndFundTestUserWithMnemonic(
 	if err != nil {
 		return nil, fmt.Errorf("failed to get source user wallet: %w", err)
 	}
-	// not funding neutron
-	if chain.Config().ChainID != "neutron-2" {
-		err = chain.SendFunds(ctx, FaucetAccountKeyName, ibc.WalletAmount{
-			Address: user.Bech32Address(chainCfg.Bech32Prefix),
-			Amount:  amount,
-			Denom:   chainCfg.Denom,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to get funds from faucet: %w", err)
-		}
+
+	faucetAddress, _ := chain.GetAddress(ctx, FaucetAccountKeyName)
+	neutronFaucetAddress, _ := types.Bech32ifyAddressBytes(chain.Config().Bech32Prefix, faucetAddress)
+	fmt.Printf("\n\nfaucet address: %s\n", neutronFaucetAddress)
+
+	// if chain.Config().ChainID != "stride-3" {
+	fmt.Printf("\nattempting to fund chainId: %s\n", chain.Config().ChainID)
+	fmt.Printf("\nsending funds to user: %s : %s\n", user.KeyName, user.Bech32Address(chainCfg.Bech32Prefix))
+
+	// keyBech32, _ := chain
+	err = chain.SendFunds(ctx, FaucetAccountKeyName, ibc.WalletAmount{
+		Address: user.Bech32Address(chainCfg.Bech32Prefix),
+		Amount:  amount,
+		Denom:   chainCfg.Denom,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get funds from faucet: %w", err)
 	}
+	fmt.Printf("\nfunded user %s\n", user.Bech32Address(chainCfg.Bech32Prefix))
+	// }
 	return user, nil
 }
 

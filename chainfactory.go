@@ -8,8 +8,10 @@ import (
 	"sync"
 
 	"github.com/strangelove-ventures/interchaintest/v3/chain/cosmos"
-	"github.com/strangelove-ventures/interchaintest/v3/chain/penumbra"
-	"github.com/strangelove-ventures/interchaintest/v3/chain/polkadot"
+	// "github.com/strangelove-ventures/interchaintest/v3/chain/penumbra"
+	// "github.com/strangelove-ventures/interchaintest/v3/chain/polkadot"
+	// "github.com/strangelove-ventures/interchaintest/v3/chain/penumbra"
+	// "github.com/strangelove-ventures/interchaintest/v3/chain/polkadot"
 	"github.com/strangelove-ventures/interchaintest/v3/ibc"
 	"github.com/strangelove-ventures/interchaintest/v3/label"
 	"go.uber.org/zap"
@@ -137,23 +139,23 @@ func buildChain(log *zap.Logger, testName string, cfg ibc.ChainConfig, numValida
 	switch cfg.Type {
 	case "cosmos":
 		return cosmos.NewCosmosChain(testName, cfg, nv, nf, log), nil
-	case "penumbra":
-		return penumbra.NewPenumbraChain(log, testName, cfg, nv, nf), nil
-	case "polkadot":
-		switch {
-		case strings.Contains(cfg.Name, "composable"):
-			parachains := []polkadot.ParachainConfig{{
-				Bin:             "composable",
-				ChainID:         "dali-dev",
-				Image:           cfg.Images[1],
-				NumNodes:        nf,
-				Flags:           []string{"--execution=wasm", "--wasmtime-instantiation-strategy=recreate-instance-copy-on-write"},
-				RelayChainFlags: []string{"--execution=wasm"},
-			}}
-			return polkadot.NewPolkadotChain(log, testName, cfg, nv, parachains), nil
-		default:
-			return nil, fmt.Errorf("unexpected error, unknown polkadot parachain: %s", cfg.Name)
-		}
+	// case "penumbra":
+	// 	return penumbra.NewPenumbraChain(log, testName, cfg, nv, nf), nil
+	// case "polkadot":
+	// 	switch {
+	// 	case strings.Contains(cfg.Name, "composable"):
+	// 		parachains := []polkadot.ParachainConfig{{
+	// 			Bin:             "composable",
+	// 			ChainID:         "dali-dev",
+	// 			Image:           cfg.Images[1],
+	// 			NumNodes:        nf,
+	// 			Flags:           []string{"--execution=wasm", "--wasmtime-instantiation-strategy=recreate-instance-copy-on-write"},
+	// 			RelayChainFlags: []string{"--execution=wasm"},
+	// 		}}
+	// 		return polkadot.NewPolkadotChain(log, testName, cfg, nv, parachains), nil
+	// 	default:
+	// 		return nil, fmt.Errorf("unexpected error, unknown polkadot parachain: %s", cfg.Name)
+	// 	}
 	default:
 		return nil, fmt.Errorf("unexpected error, unknown chain type: %s for chain: %s", cfg.Type, cfg.Name)
 	}

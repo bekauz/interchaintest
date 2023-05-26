@@ -53,14 +53,35 @@ func TestICS(t *testing.T) {
 				Bin:            "neutrond",
 				Bech32Prefix:   "neutron",
 				Denom:          "untrn",
-				GasPrices:      "0.0untrn",
+				GasPrices:      "0.00untrn",
 				GasAdjustment:  1.3,
 				TrustingPeriod: "1197504s",
 				NoHostMount:    false,
 				ModifyGenesis:  cosmos.ModifyNeutronGenesis("0.05", reward_denoms[:], provider_reward_denoms[:]),
 			},
 		},
-		{Name: "stride", Version: "v9.0.0"},
+		// {Name: "stride", Version: "v9.0.0"},
+		{
+			ChainConfig: ibc.ChainConfig{
+				Type:    "cosmos",
+				Name:    "stride",
+				ChainID: "stride-3",
+				Images: []ibc.DockerImage{
+					{
+						Repository: "stridezone",
+						Version:    "stride",
+					},
+				},
+				Bin:            "strided",
+				Bech32Prefix:   "stride",
+				Denom:          "ustrd",
+				GasPrices:      "0.00ustrd",
+				GasAdjustment:  1.3,
+				TrustingPeriod: "1197504s",
+				NoHostMount:    false,
+				// ModifyGenesis:  cosmos.ModifyNeutronGenesis("0.05", reward_denoms[:], provider_reward_denoms[:]),
+			},
+		},
 	})
 
 	chains, err := cf.Chains(t.Name())

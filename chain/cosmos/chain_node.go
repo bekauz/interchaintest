@@ -526,7 +526,6 @@ func (tn *ChainNode) InitHomeFolder(ctx context.Context) error {
 func (tn *ChainNode) CreateKey(ctx context.Context, name string) error {
 	tn.lock.Lock()
 	defer tn.lock.Unlock()
-
 	_, _, err := tn.ExecBin(ctx,
 		"keys", "add", name,
 		"--coin-type", tn.Chain.Config().CoinType,
@@ -676,8 +675,10 @@ func (tn *ChainNode) StoreContract(ctx context.Context, keyName string, fileName
 		return "", fmt.Errorf("writing contract file to docker volume: %w", err)
 	}
 
-	if _, err := tn.ExecTx(ctx, keyName, "wasm", "store", path.Join(tn.HomeDir(), file), "--gas", "auto"); err != nil {
-		return "", err
+	if _, err := tn.ExecTx(ctx, keyName, "wasm", "store", path.Join(tn.HomeDir(), file),
+		"--gas", "auto",
+	); err != nil {
+		return "execTx fails", err
 	}
 
 	err = testutil.WaitForBlocks(ctx, 5, tn.Chain)

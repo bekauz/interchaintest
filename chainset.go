@@ -83,7 +83,6 @@ func (cs *chainSet) CreateCommonAccount(ctx context.Context, keyName string) (be
 		c := c
 		eg.Go(func() error {
 			config := c.Config()
-
 			if err := c.CreateKey(egCtx, keyName); err != nil {
 				return fmt.Errorf("failed to create key with name %q on chain %s: %w", keyName, config.Name, err)
 			}

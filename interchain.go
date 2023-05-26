@@ -557,6 +557,7 @@ func (ic *Interchain) genesisWalletAmounts(ctx context.Context) (map[ibc.Chain][
 
 	// Add faucet for each chain first.
 	for c := range ic.chains {
+		print("adding faucet for chain ", c.Config().ChainID, " : ", faucetAddresses[c])
 		// The values are nil at this point, so it is safe to directly assign the slice.
 		walletAmounts[c] = []ibc.WalletAmount{
 			{
