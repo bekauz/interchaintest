@@ -46,14 +46,15 @@ func TestICS(t *testing.T) {
 				ChainID: "neutron-2",
 				Images: []ibc.DockerImage{
 					{
-						Repository: "neutron-node",
-						Version:    "latest",
+						Repository: "neutron",
+						Version:    "v1.0.1",
+						UidGid:     "1025:1025",
 					},
 				},
 				Bin:            "neutrond",
 				Bech32Prefix:   "neutron",
 				Denom:          "untrn",
-				GasPrices:      "0.00untrn",
+				GasPrices:      "0.0untrn",
 				GasAdjustment:  1.3,
 				TrustingPeriod: "1197504s",
 				NoHostMount:    false,
@@ -68,8 +69,9 @@ func TestICS(t *testing.T) {
 				ChainID: "stride-3",
 				Images: []ibc.DockerImage{
 					{
-						Repository: "stridezone",
-						Version:    "stride",
+						Repository: "ghcr.io/strangelove-ventures/heighliner/stride",
+						Version:    "v9.1.1",
+						UidGid:     "1025:1025",
 					},
 				},
 				Bin:            "strided",
@@ -147,8 +149,21 @@ func TestICS(t *testing.T) {
 	err = testutil.WaitForBlocks(ctx, 10, provider, consumer, stride)
 	require.NoError(t, err, "failed to wait for blocks")
 
+	// Start the relayer on both paths
+	err = r.StartRelayer(ctx, eRep, icsPath, gaiaNeutronIbcPath, gaiaStrideIbcPath)
+	require.NoError(t, err)
+
+	t.Cleanup(
+		func() {
+			err := r.StopRelayer(ctx, eRep)
+			if err != nil {
+				t.Logf("an error occured while stopping the relayer: %s", err)
+			}
+		},
+	)
+
 	// Create and Fund User Wallets on gaia, neutron, and stride
-	fundAmount := int64(10_000_000)
+	fundAmount := int64(10)
 	users := ibctest.GetAndFundTestUsers(t, ctx, "default", fundAmount, provider, consumer, stride)
 
 	gaiaUser := users[0]
