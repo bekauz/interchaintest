@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	ibctest "github.com/strangelove-ventures/interchaintest/v3"
 	"github.com/strangelove-ventures/interchaintest/v3/chain/cosmos"
@@ -149,7 +150,7 @@ func TestICS(t *testing.T) {
 	err = testutil.WaitForBlocks(ctx, 10, provider, consumer, stride)
 	require.NoError(t, err, "failed to wait for blocks")
 
-	// Start the relayer on both paths
+	// Start the relayer on all paths
 	err = r.StartRelayer(ctx, eRep, icsPath, gaiaNeutronIbcPath, gaiaStrideIbcPath)
 	require.NoError(t, err)
 
@@ -162,8 +163,35 @@ func TestICS(t *testing.T) {
 		},
 	)
 
+	err = testutil.WaitForBlocks(ctx, 2, provider, consumer, stride)
+	require.NoError(t, err, "failed to wait for blocks")
+
+	// We need to do a staking tx to ensure we trigger a VSC packet update.
+	// This is necessary to enable bank sends on the consumer.
+	// The pubkey is randomly generated and we never run this validator. It will eventually get jailed which will trigger more vsc.
+	cmd := []string{"gaiad", "tx", "staking", "create-validator",
+		"--amount", "1000000uatom",
+		"--pubkey", `{"@type":"/cosmos.crypto.ed25519.PubKey","key":"qwrYHaJ7sNHfYBR1nzDr851+wT4ed6p8BbwTeVhaHoA="}`,
+		"--moniker", "a",
+		"--commission-rate", "0.1",
+		"--commission-max-rate", "0.2",
+		"--commission-max-change-rate", "0.01",
+		"--min-self-delegation", "1000000",
+		"--node", provider.GetRPCAddress(),
+		"--home", provider.HomeDir(),
+		"--chain-id", provider.Config().ChainID,
+		"--from", "faucet",
+		"--keyring-backend", keyring.BackendTest,
+		"-y",
+	}
+	_, _, err = provider.Exec(ctx, cmd, nil)
+	require.NoError(t, err)
+
+	err = testutil.WaitForBlocks(ctx, 2, provider, consumer, stride)
+	require.NoError(t, err, "failed to wait for blocks")
+
 	// Create and Fund User Wallets on gaia, neutron, and stride
-	fundAmount := int64(10)
+	fundAmount := int64(1_000_000)
 	users := ibctest.GetAndFundTestUsers(t, ctx, "default", fundAmount, provider, consumer, stride)
 
 	gaiaUser := users[0]
@@ -181,7 +209,7 @@ func TestICS(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, fundAmount, gaiaUserBalInitial)
 
-	amountToSend := int64(500_000)
+	amountToSend := int64(5_000)
 	neutronAddress := neutronUser.Bech32Address(consumer.Config().Bech32Prefix)
 	strideAddress := strideUser.Bech32Address(stride.Config().Bech32Prefix)
 
