@@ -2,6 +2,7 @@ package interchain
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math"
@@ -96,6 +97,14 @@ func StartChain(installDir, chainCfgFile string, ac *types.AppStartConfig) {
 	}
 	ic.AdditionalGenesisWallets = SetupGenesisWallets(config, chains)
 
+	for _, ch := range chains {
+
+		wallets := ic.AdditionalGenesisWallets[ch]
+		for _, wallet := range wallets {
+			println("wallet: ", wallet.Address, " amount: ", wallet.Amount.String(), " denom: ", wallet.Denom)
+		}
+	}
+
 	fakeT := FakeTesting{
 		FakeName: name,
 	}
@@ -109,6 +118,13 @@ func StartChain(installDir, chainCfgFile string, ac *types.AppStartConfig) {
 	// setup a relayer if we have IBC paths to use.
 	if len(ibcpaths) > 0 {
 		rlyCfg := config.Relayer
+		rlyCfgStr, err := json.Marshal(rlyCfg)
+		if err != nil {
+			log.Fatalf("Error converting to JSON: %s", err)
+		}
+
+		println("\nrlyCfg: \n")
+		println(string(rlyCfgStr))
 
 		relayerType, relayerName := ibc.CosmosRly, "relay"
 		rf := interchaintest.NewBuiltinRelayerFactory(
@@ -126,18 +142,37 @@ func StartChain(installDir, chainCfgFile string, ac *types.AppStartConfig) {
 		relayer = rf.Build(fakeT, client, network)
 		ic = ic.AddRelayer(relayer, relayerName)
 
+		jsonString, err := json.Marshal(relayer)
+		if err != nil {
+			log.Fatalf("Error converting to JSON: %s", err)
+		}
+
+		println("\nrelayer created: \n")
+		println(string(jsonString))
+
 		// Add links between chains
 		LinkIBCPaths(ibcpaths, chains, ic, relayer)
 	}
 
 	// Build all chains & begin.
-	err = ic.Build(ctx, eRep, interchaintest.InterchainBuildOptions{
-		TestName:         name,
-		Client:           client,
-		NetworkID:        network,
-		SkipPathCreation: false,
-		// BlockDatabaseFile: interchaintest.DefaultBlockDatabaseFilepath(),
-	})
+	icTestBuildOptions := interchaintest.InterchainBuildOptions{
+		TestName:          name,
+		Client:            client,
+		NetworkID:         network,
+		SkipPathCreation:  true,
+		BlockDatabaseFile: interchaintest.DefaultBlockDatabaseFilepath(),
+	}
+
+	icTestBuildOptionsStr, err := json.MarshalIndent(icTestBuildOptions, "", "    ")
+	if err != nil {
+		println("Error converting to JSON with indentation: %s", err)
+	}
+	println("icTestBuildOptions: ", string(icTestBuildOptionsStr))
+
+	err = ic.Build(ctx, eRep, icTestBuildOptions)
+	jsonErr, _ := json.MarshalIndent(err, "", "    ")
+
+	println("error building the interchain: ", string(jsonErr))
 	if err != nil {
 		logger.Fatal("ic.Build", zap.Error(err))
 	}

@@ -2,6 +2,7 @@ package interchain
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/strangelove-ventures/interchaintest/v8"
@@ -26,6 +27,7 @@ func LinkIBCPaths(ibcpaths map[string][]int, chains []ibc.Chain, ic *interchaint
 	for path, c := range ibcpaths {
 		chain1 := chains[c[0]]
 		chain2 := chains[c[1]]
+		println("creating link between", chain1.Config().ChainID, "and", chain2.Config().ChainID)
 
 		interLink := interchaintest.InterchainLink{
 			Chain1:  chain1,
@@ -33,6 +35,12 @@ func LinkIBCPaths(ibcpaths map[string][]int, chains []ibc.Chain, ic *interchaint
 			Path:    path,
 			Relayer: r,
 		}
+
+		interLinkStr, err := json.MarshalIndent(interLink, "", "    ")
+		if err != nil {
+			println("Error converting to JSON with indentation: %s", err)
+		}
+		println("interLink created: ", string(interLinkStr))
 
 		ic = ic.AddLink(interLink)
 	}

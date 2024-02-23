@@ -1,0 +1,175 @@
+{
+  "chains": [
+    {
+      "name": "gaia",
+      "chain_id": "localcosmos-1",
+      "denom": "uatom",
+      "binary": "gaiad",
+      "bech32_prefix": "cosmos",
+      "docker_image": {
+        "version": "v9.1.0"
+      },
+      "gas_prices": "0%DENOM%",
+      "chain_type": "cosmos",
+      "coin_type": 118,
+      "trusting_period": "112h",
+      "gas_adjustment": 2.0,
+      "number_vals": 1,
+      "number_node": 0,
+      "debugging": true,
+      "block_time": "500ms",
+      "ibc_paths": [
+        "gaia-neutron-1"
+      ],
+      "genesis": {
+        "modify": [
+          {
+            "key": "app_state.gov.voting_params.voting_period",
+            "value": "15s"
+          },
+          {
+            "key": "app_state.gov.deposit_params.max_deposit_period",
+            "value": "15s"
+          },
+          {
+            "key": "app_state.gov.deposit_params.min_deposit.0.denom",
+            "value": "uatom"
+          },
+          {
+            "key": "app_state.interchainaccounts.host_genesis_state.params.allow_messages",
+            "value": [
+              "/cosmos.bank.v1beta1.MsgSend",
+              "/cosmos.bank.v1beta1.MsgMultiSend",
+              "/cosmos.staking.v1beta1.MsgDelegate",
+              "/cosmos.staking.v1beta1.MsgUndelegate",
+              "/cosmos.staking.v1beta1.MsgBeginRedelegate",
+              "/cosmos.staking.v1beta1.MsgRedeemTokensforShares",
+              "/cosmos.staking.v1beta1.MsgTokenizeShares",
+              "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+              "/cosmos.distribution.v1beta1.MsgSetWithdrawAddress",
+              "/ibc.applications.transfer.v1.MsgTransfer"
+            ]
+          }
+        ],
+        "accounts": [
+          {
+            "name": "acc0",
+            "address": "cosmos1hj5fveer5cjtn4wd6wstzugjfdxzl0xpxvjjvr",
+            "amount": "10000000000%DENOM%",
+            "mnemonic": "decorate bright ozone fork gallery riot bus exhaust worth way bone indoor calm squirrel merry zero scheme cotton until shop any excess stage laundry"
+          }
+        ]
+      }
+    },
+    {
+      "name": "neutron",
+      "chain_id": "localneutron-1",
+      "denom": "untrn",
+      "binary": "neutrond",
+      "bech32_prefix": "neutron",
+      "docker_image": {
+        "version": "v2.0.0",
+        "uid_gid": "1025:1025"
+      },
+      "gas_prices": "0.0untrn,0.0uatom",
+      "chain_type": "cosmos",
+      "coin_type": 118,
+      "trusting_period": "112h",
+      "gas_adjustment": 2.0,
+      "number_vals": 1,
+      "number_node": 0,
+      "debugging": true,
+      "ibc_paths": [
+        "gaia-neutron-1"
+      ],
+      "block_time": "500ms",
+      "host_port_override": {
+        "100": "1000"
+      },
+      "config_file_overrides": [
+        {
+          "file": "config/config.toml",
+          "paths": {
+            "moniker": "localic",
+            "rpc.cors_allowed_origins": [
+              "*"
+            ]
+          },
+          "consensus": {
+            "timeout_commit": "1s"
+          }
+        }
+      ],
+      "genesis": {
+        "modify": [
+          {
+            "key": "app_state.ccvconsumer.params.soft_opt_out_threshold",
+            "value": "0.05"
+          },
+          {
+            "key": "app_state.ccvconsumer.params.reward_denoms",
+            "value": [
+              "untrn"
+            ]
+          },
+          {
+            "key": "app_state.ccvconsumer.params.provider_reward_denoms",
+            "value": [
+              "uatom"
+            ]
+          },
+          {
+            "key": "consensus_params.block.max_gas",
+            "value": "1000000000"
+          },
+          {
+            "key": "app_state.globalfee.params.minimum_gas_prices",
+            "value": {
+              "denom": "untrn",
+              "amount": "0"
+            }
+          },
+          {
+            "key": "app_state.feeburner.params.treasury_address",
+            "value": "neutron1hj5fveer5cjtn4wd6wstzugjfdxzl0xpznmsky"
+          },
+          {
+            "key": "app_state.tokenfactory.params.fee_collector_address",
+            "value": "neutron1hj5fveer5cjtn4wd6wstzugjfdxzl0xpznmsky"
+          },
+          {
+            "key": "app_state.interchainaccounts.host_genesis_state.params.allow_messages",
+            "value": [
+              "/cosmos.bank.v1beta1.MsgSend",
+              "/cosmos.bank.v1beta1.MsgMultiSend",
+              "/cosmos.staking.v1beta1.MsgDelegate",
+              "/cosmos.staking.v1beta1.MsgUndelegate",
+              "/cosmos.staking.v1beta1.MsgBeginRedelegate",
+              "/cosmos.staking.v1beta1.MsgRedeemTokensforShares",
+              "/cosmos.staking.v1beta1.MsgTokenizeShares",
+              "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+              "/cosmos.distribution.v1beta1.MsgSetWithdrawAddress",
+              "/ibc.applications.transfer.v1.MsgTransfer",
+              "/ibc.lightclients.localhost.v2.ClientState",
+              "/ibc.core.client.v1.MsgCreateClient",
+              "/ibc.core.client.v1.Query/ClientState",
+              "/ibc.core.client.v1.Query/ConsensusState",
+              "/ibc.core.connection.v1.Query/Connection"
+            ]
+          }
+        ],
+        "accounts": [
+          {
+            "name": "acc0",
+            "address": "neutron1hj5fveer5cjtn4wd6wstzugjfdxzl0xpznmsky",
+            "amount": "10000000000%DENOM%",
+            "mnemonic": "decorate bright ozone fork gallery riot bus exhaust worth way bone indoor calm squirrel merry zero scheme cotton until shop any excess stage laundry"
+          }
+        ],
+        "startup_commands": [
+          "%BIN% keys add example-key-after --keyring-backend test --home %HOME%"
+        ]
+      }
+    }
+  ]
+}

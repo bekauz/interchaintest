@@ -175,6 +175,9 @@ func CreateChainConfigs(cfg types.Chain) (ibc.ChainConfig, *interchaintest.Chain
 		EncodingConfig:      nil,
 	}
 
+	genesisStr, _ := json.MarshalIndent(chainCfg.ModifyGenesis, "", "    ")
+	println("\n chain cfg created. genesis: ", string(genesisStr))
+
 	if cfg.DockerImage.Version == "" {
 		panic("DockerImage.Version is required in your config")
 	}

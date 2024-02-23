@@ -47,6 +47,11 @@ var startCmd = &cobra.Command{
 		relayerVer := cmd.Flag(FlagRelayerVersion).Value.String()
 		relayerUidGid := cmd.Flag(FlagRelayerUidGid).Value.String()
 		relayerFlags := strings.Split(cmd.Flag(FlagRelayerStartupFlags).Value.String(), " ")
+		println("\n\n\ndebugging: \n\n\n")
+		println("relayerImg: ", relayerImg)
+		println("relayerVer: ", relayerVer)
+		println("relayerUidGid: ", relayerUidGid)
+		println("relayerFlags: ", relayerFlags)
 
 		interchain.StartChain(parentDir, configPath, &types.AppStartConfig{
 			Address: apiAddr,
